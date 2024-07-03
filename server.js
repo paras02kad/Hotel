@@ -3,14 +3,31 @@ const app = express();
 const db = require('./db');
 require('dotenv').config();
 
+const passport = require('./auth');
+
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
 
+//const mongoURL = process.env.MONGODB_URL;
+const mongoURL = process.env.MONGODB_URL_LOCAL;
+
+//! Middleware function
+const logRequest = (req, res, next) => {
+  console.log(`${new Date().toLocaleString()} Request Made to : ${req.originalUrl}`);
+  next(); //! Move on to next phase
+}
+app.use(logRequest);
 
 
-app.get('/', function (req, res) {
-  res.send('welcome to my Hotel.. how can i help you ?')
+
+
+app.use(passport.initialize());
+
+const localAuthMiddleware = passport.authenticate('local',{session : false});
+
+app.get('/', localAuthMiddleware, function (req, res) {
+  res.send('welcome to my Hotel.. how can i help you ?');
 });
 
 
@@ -56,15 +73,13 @@ app.get('/', function (req, res) {
 //     }
 //   })
 // });
+
+
 //!------------------------------------------------------------------------------------------------------
 //* Here we have imported router files frpom routes folder
 
 const personRoutes = require('./routes/personRoutes');
-app.use('/person', personRoutes);
-
-
-
-
+app.use('/person',localAuthMiddleware, personRoutes);
 
 
 //!-------------------------------------------------------------------------------------------------------
@@ -73,14 +88,6 @@ app.use('/person', personRoutes);
 
 const menuRoutes = require('./routes/menuRoutes');
 app.use('/menu', menuRoutes);
-
-
-
-const mongoURL = process.env.MONGODB_URL;
-//const PORT = process.env.MONGODB_URL;
-
-
-
 
 
 
